@@ -1,0 +1,17 @@
+
+#Network_Resource_Name: https://water.usgs.gov/GIS/dsdl/boundaries_shapefiles_by_aggeco.zip
+```{r}
+#setwd("C:/Users/huangt/Downloads/boundaries_shapefiles_by_aggeco/boundaries_shapefiles_by_aggeco")
+setwd("C:/Users/huangt/Downloads/boundaries_shapefiles_by_aggeco/boundaries")
+```
+
+#load the liberary
+```{r}
+library(foreign)
+library(raster)
+```
+#read the watershed shapefile
+```{r}
+bas_ref_all<-read.dbf("C:/Users/huangt/Downloads/boundaries_shapefiles_by_aggeco/boundaries/bas_ref_all.dbf")
+head(bas_ref_all)
+```
