@@ -1,2 +1,2 @@
 # watershed_land_use
-Calculate land use percentage by USGS watersheds
+Calculate land use percentage upstream of a USGS gauge station.
