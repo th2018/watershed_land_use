@@ -15,3 +15,5 @@ library(raster)
 bas_ref_all<-read.dbf("C:/Users/huangt/Downloads/boundaries_shapefiles_by_aggeco/boundaries/bas_ref_all.dbf")
 head(bas_ref_all)
 ```
+
+#Use Split By Attributes tool in ArcGIS to split the shapefile for each gauge ID
