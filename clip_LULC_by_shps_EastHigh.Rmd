@@ -1,0 +1,184 @@
+---
+title: "clip_LULC_by_shps"
+output: html_document
+---
+
+#load packages
+```{r}
+# load the raster, sp, and rgdal packages
+#install.packages("raster")
+library(raster)
+library(sp)
+#install.packages("rgdal")
+library(rgdal)
+```
+
+#read LULC
+```{r}
+
+nlcd2006<-raster("D:/tao/NLCD_2006_Land_Cover_L48_20190424/nlcd2006.img")
+                 plot(nlcd2006)
+```
+
+#create the GAGE ID list from shps
+```{r}
+setwd("C:/Users/gis/Documents/TAO/crypto/bas_ws/bas_nonref_EastHghlnds_cry_ws")
+list<-list.files(pattern = "\\.shp$")
+GAGE_ID<-as.data.frame("GAGE_ID")
+names(GAGE_ID)<-c("GAGE_ID")
+for (i in list)
+{
+
+  
+ i<- strsplit(as.character(i), '[.]')
+ i<-as.data.frame(i)
+ i<-as.data.frame(i[1,])
+ names(i)<-c("GAGE_ID")
+  print(i)
+  GAGE_ID<-rbind(GAGE_ID,i)
+}
+GAGE_ID<-unique(GAGE_ID[,"GAGE_ID"])
+GAGE_ID<-GAGE_ID[-1]
+
+```
+
+#find the gages with crypto data
+```{r}
+load("C:/Users/gis/Documents/TAO/crypto/USGS_cc2.Rdata")
+head(USGS_cc2$MonitoringLocationIdentifier)
+```
+
+#read shps
+```{r}
+#make the df
+ws_lulc<-data.frame("Var1"="","Freq"="","GAGE_ID"="","percent"="")
+# Import a polygon shapefile: readOGR("path","fileName")
+# no extension needed as readOGR only imports shapefiles
+ws_lulc$Freq<-as.numeric(as.character(ws_lulc$Freq))        
+ws_lulc$GAGE_ID<- (as.character(ws_lulc$GAGE_ID))
+ws_lulc$percent<-as.numeric(as.character(ws_lulc$percent))
+
+for (g in GAGE_ID)
+{
+  shp_name<-as.character(g)
+  g<-readOGR(dsn="C:/Users/gis/Documents/TAO/crypto/bas_ws/bas_nonref_EastHghlnds_cry_ws",layer=as.character(g))
+ nlcd2006_g<-crop(x = nlcd2006, y = g)
+ nlcd2006_m<-raster::mask(nlcd2006_g,g)
+ nlcd2006_m_df<-as.data.frame(nlcd2006_m)
+ 
+ nlcd2006_m_df_ct<-as.data.frame(table(nlcd2006_m_df$nlcd2006))
+ 
+ nlcd2006_m_df_ct$GAGE_ID<-shp_name
+nlcd2006_m_df_ct$percent<-(nlcd2006_m_df_ct$Freq/sum(nlcd2006_m_df_ct$Freq))
+ws_lulc<-rbind(ws_lulc,nlcd2006_m_df_ct)
+  }
+save(ws_lulc,file="C:/Users/gis/Documents/TAO/crypto/bas_ws/bas_nonref_EastHghlnds_cry_ws/nlcd2006_ws_lulc.Rdata")
+
+```
+
+
+
+
+
+
+```{r}
+load("C:/Users/gis/Documents/TAO/crypto/bas_ws/bas_nonref_EastHghlnds_cry_ws/nlcd2006_ws_lulc.Rdata")
+ws_lulc$percent<- ws_lulc$percent*100
+
+ws_lulc$GAGE_ID<-gsub("GAGE_ID_", "USGS-" ,ws_lulc$GAGE_ID)
+
+
+u_l<-unique(ws_lulc$Var1)
+for (l in u_l[-1])
+{
+   lname<-paste("ws_lulc_",l,sep="")
+  lname<-ws_lulc[ws_lulc$Var1==l,]
+ 
+  colnames(lname)[colnames(lname)=="percent"] <- paste("lulc",l,sep="")
+  print (lname)
+
+  
+ write.csv(lname,file=paste("C:/Users/gis/Documents/TAO/crypto/bas_ws/bas_nonref_EastHghlnds_cry_ws/ws_lulc_",l,".csv",sep=""))
+ 
+ 
+}
+
+
+
+```
+#merge important LULC   (11 21 22 41 81 82 90 23 24 31 42 43 52 71 95)
+```{r}
+
+
+important_lulc<-unique(ws_lulc[(ws_lulc$percent)>=20,]$Var1)
+```
+
+
+<!-- lu41_81<-merge(lu41,lu81,by.x="GAGE_ID",by.y="GAGE_ID" ) -->
+<!-- lu41_81_90<-merge(lu41_81,lu90,by.x="GAGE_ID",by.y="GAGE_ID" ) -->
+<!-- lu41_81_90_21<-merge(lu41_81_90,lu21,by.x="GAGE_ID",by.y="GAGE_ID" ) -->
+<!-- lu41_81_90_21_11<-merge(lu41_81_90_21,lu11,by.x="GAGE_ID",by.y="GAGE_ID" ) -->
+<!-- lu41_81_90_21_11_52<-merge(lu41_81_90_21_11,lu52,by.x="GAGE_ID",by.y="GAGE_ID" ) -->
+<!-- lu41_81_90_21_22_11_52<-merge(lu41_81_90_21_11_52,lu22,by.x="GAGE_ID",by.y="GAGE_ID" ) -->
+<!-- bas_nonref_EastHghlnds_cry_ws_lu41_43_81_90_21_22_11_52<-merge(lu41_81_90_21_22_11_52,lu43,by.x="GAGE_ID",by.y="GAGE_ID" ) -->
+
+<!-- save(bas_nonref_EastHghlnds_cry_ws_lu41_43_81_90_21_22_11_52,file="/Users/owner/Desktop/bas_nonref_EastHghlnds_cry_ws/bas_nonref_EastHghlnds_cry_ws_lu41_43_81_90_21_22_11_52.Rdata") -->
+<!-- ``` -->
+
+
+```{r}
+setwd("C:/Users/gis/Documents/TAO/crypto/bas_ws/bas_nonref_EastHghlnds_cry_ws")
+
+ lu11<-read.csv("ws_lulc_11.csv",header=T,sep=',')
+ lu21<-read.csv("ws_lulc_21.csv",header=T,sep=',')
+ lu22<-read.csv("ws_lulc_22.csv",header=T,sep=',')
+ lu41<-read.csv("ws_lulc_41.csv",header=T,sep=',')
+ lu81<-read.csv("ws_lulc_81.csv",header=T,sep=',')
+ lu82<-read.csv("ws_lulc_82.csv",header=T,sep=',')
+ lu90<-read.csv("ws_lulc_90.csv",header=T,sep=',')
+ lu23<-read.csv("ws_lulc_23.csv",header=T,sep=',')
+ lu24<-read.csv("ws_lulc_24.csv",header=T,sep=',')
+ lu31<-read.csv("ws_lulc_31.csv",header=T,sep=',')
+ lu42<-read.csv("ws_lulc_42.csv",header=T,sep=',')
+ lu43<-read.csv("ws_lulc_43.csv",header=T,sep=',')
+ lu52<-read.csv("ws_lulc_52.csv",header=T,sep=',')
+ lu71<-read.csv("ws_lulc_71.csv",header=T,sep=',')
+ lu95<-read.csv("ws_lulc_95.csv",header=T,sep=',')
+
+ lu11_m<-merge(lu11,lu21,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu21_m<-merge(lu11_m,lu22,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu22_m<-merge(lu21_m,lu41,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu41_m<-merge(lu22_m,lu81,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu81_m<-merge(lu41_m,lu82,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu82_m<-merge(lu81_m,lu90,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu90_m<-merge(lu82_m,lu23,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu23_m<-merge(lu90_m,lu24,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu24_m<-merge(lu23_m,lu31,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu31_m<-merge(lu24_m,lu42,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu42_m<-merge(lu31_m,lu43,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu43_m<-merge(lu42_m,lu52,by.x="GAGE_ID",by.y="GAGE_ID")
+ lu52_m<-merge(lu43_m,lu71,by.x="GAGE_ID",by.y="GAGE_ID")
+bas_nonref_EastHghlnds_cry_ws<-merge(lu52_m,lu95,by.x="GAGE_ID",by.y="GAGE_ID")
+
+bas_nonref_EastHghlnds_cry_ws<-bas_nonref_EastHghlnds_cry_ws[,c("GAGE_ID","lulc11","lulc21"
+,"lulc22","lulc41"
+,"lulc82","lulc81"
+,"lulc90"
+, "lulc23"
+, "lulc24"
+,"lulc31", "lulc42"
+,"lulc43"
+,"lulc52"
+,"lulc71", "lulc95")]
+ 
+save(bas_nonref_EastHghlnds_cry_ws,file="C:/Users/gis/Documents/TAO/crypto/bas_ws/bas_nonref_EastHghlnds_cry_ws/bas_nonref_EastHghlnds_cry_ws.Rdata")
+```
+
+
+
+
+
+
+
+
+
